@@ -137,4 +137,15 @@ describe.concurrent('parsePgArray', () => {
 		expect(parsePgArray('{NULLABLE,a}')).toStrictEqual(['NULLABLE', 'a']);
 		expect(parsePgArray('{point(1 2):NULL}', ':')).toStrictEqual(['point(1 2)', null]);
 	});
+
+	// https://github.com/drizzle-team/drizzle-orm/issues/6730
+	it('reads an escaped NULL token as a string, not null', ({ expect }) => {
+		expect(parsePgArray(String.raw`{NU\LL,"NULL",NULL}`)).toStrictEqual(['NULL', 'NULL', null]);
+		expect(parsePgArray(String.raw`{\NULL,\ab,c}`)).toStrictEqual(['NULL', 'ab', 'c']);
+	});
+
+	it('reads unquoted null in any letter case as null', ({ expect }) => {
+		expect(parsePgArray('{null,Null,nUlL}')).toStrictEqual([null, null, null]);
+		expect(parsePgArray('{nullable,a}')).toStrictEqual(['nullable', 'a']);
+	});
 });

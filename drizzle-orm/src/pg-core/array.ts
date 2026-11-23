@@ -15,7 +15,7 @@ function parsePgArrayValue(
 		}
 
 		if (char === '"') {
-			return [arrayString.slice(startFrom, i).replace(/\\(.)/g, '$1'), i + 1];
+			return [arrayString.slice(startFrom, i), i + 1];
 		}
 
 		if (inQuotes) {
@@ -23,11 +23,11 @@ function parsePgArrayValue(
 		}
 
 		if (char === delim || char === '}') {
-			return [arrayString.slice(startFrom, i).replace(/\\(.)/g, '$1'), i];
+			return [arrayString.slice(startFrom, i), i];
 		}
 	}
 
-	return [arrayString.slice(startFrom).replace(/\\(.)/g, '$1'), arrayString.length];
+	return [arrayString.slice(startFrom), arrayString.length];
 }
 
 export function parsePgNestedArray(arrayString: string, startFrom = 0, delim = DEFAULT_DELIM): [any[], number] {
@@ -49,14 +49,9 @@ export function parsePgNestedArray(arrayString: string, startFrom = 0, delim = D
 
 		lastCharIsDelim = false;
 
-		if (char === '\\') {
-			i += 2;
-			continue;
-		}
-
 		if (char === '"') {
 			const [value, startFrom] = parsePgArrayValue(arrayString, i + 1, true, delim);
-			result.push(value);
+			result.push(value.replace(/\\(.)/g, '$1'));
 			i = startFrom;
 			continue;
 		}
@@ -73,7 +68,7 @@ export function parsePgNestedArray(arrayString: string, startFrom = 0, delim = D
 		}
 
 		const [value, newStartFrom] = parsePgArrayValue(arrayString, i, false, delim);
-		result.push(value === 'NULL' ? null : value);
+		result.push(value.toUpperCase() === 'NULL' ? null : value.replace(/\\(.)/g, '$1'));
 		i = newStartFrom;
 	}
 
